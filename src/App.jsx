@@ -19,7 +19,7 @@ const Sidebar = ({ activeView, setActiveView, lastData }) => {
     <aside className="w-64 bg-slate-800 text-white flex-col hidden md:flex">
       <div className="p-6 text-center border-b border-slate-700">
         <h1 className="text-2xl font-bold text-sky-400 flex items-center justify-center">
-          <Droplet className="mr-2" /> {lastData.device || 'Sensor Monitoring'}
+          <Droplet className="mr-2" /> {'Sensor Monitoring'}
         </h1>
       </div>
       <nav className="flex-1 p-4 space-y-2">
@@ -38,7 +38,7 @@ const Sidebar = ({ activeView, setActiveView, lastData }) => {
         ))}
       </nav>
       <div className="p-4 text-center text-xs text-slate-500 border-t border-slate-700">
-        <p>&copy; 2025 {lastData.device || 'Sensor Monitoring'}</p>
+        <p>&copy; 2025 {'Sensor Monitoring'}</p>
       </div>
     </aside>
   );
