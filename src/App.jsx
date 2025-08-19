@@ -1,27 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { LineChart, ReferenceLine, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { Droplet, Wind, Wifi, Battery, Activity, LayoutDashboard, BarChart3, Clock, AlertTriangle, Menu, X } from 'lucide-react';
+import { Droplet, Wind, Wifi, Battery, Activity, LayoutDashboard, BarChart3, Clock, AlertTriangle, Menu, X, MapPin } from 'lucide-react';
 
 // --- CONEXIÓN REAL A FIREBASE ---
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, onValue } from "firebase/database";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyC6MX8Vw9xZz3OTQCce1P7a2PBF7NFAG8E",
-  authDomain: "esp32-project-88df0.firebaseapp.com",
-  databaseURL: "https://esp32-project-88df0-default-rtdb.firebaseio.com",
-  projectId: "esp32-project-88df0",
-  storageBucket: "esp32-project-88df0.appspot.com"
-};
-
-const app = initializeApp(firebaseConfig);
-const db = getDatabase(app);
+import { ref, onValue } from "firebase/database";
+import { db } from "./firebase.js";
 // --- FIN DE LA CONFIGURACIÓN DE FIREBASE ---
-
 
 // --- COMPONENTES DE LA UI ---
 
-// Componente para la barra lateral de navegación (adaptado para móvil)
 const Sidebar = ({ activeView, setActiveView, isMobileOpen, onClose }) => {
   const navItems = [
     { id: 'dashboard', label: 'Vista General', icon: LayoutDashboard },
@@ -67,14 +55,13 @@ const Sidebar = ({ activeView, setActiveView, isMobileOpen, onClose }) => {
           ))}
         </nav>
         <div className="p-4 text-center text-xs text-slate-500 border-t border-slate-700">
-          <p>&copy; {new Date().getFullYear()} {'Sensor Hub'}</p>
+          <p>&copy; {new Date().getFullYear()} {'SensorHub'}</p>
         </div>
       </aside>
     </>
   );
 };
 
-// Componente para el encabezado en vista móvil
 const MobileHeader = ({ onMenuClick }) => (
   <header className="md:hidden bg-slate-800 text-white p-4 flex items-center shadow-lg">
     <button onClick={onMenuClick} className="mr-4">
@@ -86,8 +73,6 @@ const MobileHeader = ({ onMenuClick }) => (
   </header>
 );
 
-
-// Componente para las tarjetas de datos principales
 const DashboardCard = ({ icon, title, value, unit, color, bgColor }) => {
   const IconComponent = icon;
   return (
@@ -105,8 +90,48 @@ const DashboardCard = ({ icon, title, value, unit, color, bgColor }) => {
   );
 };
 
+const MapCard = ({ position, deviceName }) => {
+  if (!position || !Array.isArray(position) || position.length !== 2) {
+    return (
+      <div className="bg-white shadow-lg rounded-xl p-6 text-center">
+        <h3 className="text-lg font-semibold text-slate-600 flex items-center justify-center"><MapPin className="mr-2 h-5 w-5" />Ubicación del Sensor</h3>
+        <p className="text-slate-500 mt-2">No hay datos de ubicación disponibles.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-white shadow-lg rounded-xl p-4">
+      <h3 className="font-semibold text-slate-700 mb-4 px-2 flex items-center"><MapPin className="mr-2 h-5 w-5" />Ubicación del Sensor</h3>
+      <div className="h-80 w-full rounded-lg overflow-hidden z-0">
+        <MapContainer className="h-full w-full z-0" center={position} zoom={15} scrollWheelZoom={false} style={{ height: '100%', width: '100%' }}>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            className="filter grayscale z-0"
+          />
+          <Marker position={position}>
+            <Popup>
+              <b>Presion</b>: {deviceName.pressure.toFixed(2)}<br />
+              <b>Caudal</b>: {deviceName.flow.toFixed(2)}<br />
+              <b>RSSI</b>: {deviceName.rssi}<br />
+              <span>Última actualización: {new Date(Number(deviceName.timestamp) * 1000).toLocaleString('es-ES')}</span>
+            </Popup>
+          </Marker>
+        </MapContainer>
+      </div>
+    </div>
+  );
+};
+
+
+
 // Vista del Dashboard
 const DashboardView = ({ lastData }) => {
+
+  const sensorLocation = [-36.821966, -73.013411]; // Coordenadas
+  // 
+
   if (!lastData) {
     return (
       <div className="p-4 md:p-8 flex justify-center items-center h-full">
@@ -135,12 +160,14 @@ const DashboardView = ({ lastData }) => {
         <DashboardCard icon={Battery} title="Voltaje" value={5} unit="V" color="text-violet-500" bgColor="bg-violet-100" />
         <DashboardCard icon={Activity} title="Activo" value={activity} unit="min" color="text-orange-500" bgColor="bg-orange-100" />
       </div>
-        <div className="text-md text-slate-600 flex items-center"><Clock className="mr-2 h-4 w-4" /> Última Actualización: {date}</div>
+      <div className="grid grid-cols-1 gap-6">
+        <MapCard position={sensorLocation} deviceName={lastData} />
+      </div>
+      <div className="text-md text-slate-600 flex items-center pt-5"><Clock className="mr-2 h-4 w-4" /> Última Actualización: {date}</div>
     </div>
   );
 };
 
-// Componente para las tarjetas de gráficos
 const ChartCard = ({ data, dataKey, name, unit, treshold, color }) => (
   <div className="bg-white shadow-lg rounded-xl p-4 md:p-6">
     <h3 className="font-semibold text-slate-700 mb-4">{`${name} (${unit})`}</h3>
