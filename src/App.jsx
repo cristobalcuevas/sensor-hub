@@ -5,6 +5,9 @@ import {
   Droplet, Gauge, Waves, Wifi, Battery, Activity, LayoutDashboard, 
   BarChart3, Clock, AlertTriangle, Menu, X, MapPin 
 } from 'lucide-react';
+import { Analytics } from "@vercel/analytics/next"
+import { SpeedInsights } from "@vercel/speed-insights/next"
+
 
 import { ref, onValue } from "firebase/database";
 import { db } from "./firebase.js";
@@ -534,6 +537,8 @@ export default function App() {
         isMobileOpen={isMobileMenuOpen}
         onClose={closeMenu}
       />
+      <Analytics />
+      <SpeedInsights />
       
       <div className="flex flex-col flex-1 w-full">
         <MobileHeader onMenuClick={openMenu} />
