@@ -536,10 +536,7 @@ export default function App() {
         lastData={lastData}
         isMobileOpen={isMobileMenuOpen}
         onClose={closeMenu}
-      />
-      <Analytics />
-      <SpeedInsights />
-      
+      /> 
       <div className="flex flex-col flex-1 w-full">
         <MobileHeader onMenuClick={openMenu} />
         
@@ -554,6 +551,8 @@ export default function App() {
           )}
         </main>
       </div>
+       <Analytics />
+      <SpeedInsights />
     </div>
   );
 }
