@@ -1,21 +1,13 @@
 import { initializeApp } from "firebase/app";
 import { getDatabase, ref, onValue } from "firebase/database";
 
-
-
-
-
-
-
 const firebaseConfig = {
-  apiKey: "AIzaSyC6MX8Vw9xZz3OTQCce1P7a2PBF7NFAG8E",
-  authDomain: "esp32-project-88df0.firebaseapp.com",
-  databaseURL: "https://esp32-project-88df0-default-rtdb.firebaseio.com",
-  projectId: "esp32-project-88df0",
-  storageBucket: "esp32-project-88df0.appspot.com"
+  apiKey: import.meta.env.VITE_API_KEY,
+  authDomain: import.meta.env.VITE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_DATABASE_URL,
+  projectId: import.meta.env.VITE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_STORAGE_BUCKET
 };
 
 const app = initializeApp(firebaseConfig);
 export const db = getDatabase(app);
-
-
