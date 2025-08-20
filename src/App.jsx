@@ -3,17 +3,14 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { LineChart, ReferenceLine, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import {
   Droplet, Gauge, Waves, Wifi, Battery, Activity, LayoutDashboard,
-  BarChart3, Clock, AlertTriangle, Menu, X, MapPin, Factory, Thermometer, ThermometerSun // <-- PASO 4: Íconos nuevos
+  BarChart3, Clock, AlertTriangle, Menu, X, MapPin, Factory, Thermometer, ThermometerSun
 } from 'lucide-react';
 
 import { ref, onValue } from "firebase/database";
 import { db } from "./firebase.js";
 
-// ===================================================================================
-// PASO 1: AÑADIR CONSTANTES PARA UBIDOTS
-// ===================================================================================
 const CONSTANTS = {
-  DEVICE_NAME: 'SensorHub',
+  DEVICE_NAME: 'iaGlobal',
   SENSOR_LOCATION: [-36.821966, -73.013411],
   THRESHOLDS: {
     pressure: 2.7,
@@ -26,10 +23,10 @@ const CONSTANTS = {
     rose: '#f43f5e',
     violet: '#8b5cf6',
     orange: '#f97316',
-    amber: '#f59e0b', // Color para temperatura
+    amber: '#f59e0b',
   },
-  // --- NUEVA CONFIGURACIÓN DE UBIDOTS ---
-UBIDOTS_PLANTS: [
+
+  UBIDOTS_PLANTS: [
     {
       id: 'planta_el_volcan',
       name: 'Planta El Volcán',
@@ -37,7 +34,7 @@ UBIDOTS_PLANTS: [
         {
           id: 'volcan_presion',
           name: 'Sensor de Presión',
-          token: 'BBUS-9PmZqcYr5b515iqXRPk8Csn6rgH1er', // <-- Token específico
+          token: 'BBUS-9PmZqcYr5b515iqXRPk8Csn6rgH1er',
           variables: {
             pressure: { id: '675b4cd7acf9cf000ec3aad9', name: 'Presión', unit: 'bar', icon: Gauge, color: 'sky' },
           }
@@ -45,7 +42,7 @@ UBIDOTS_PLANTS: [
         {
           id: 'volcan_caudal_entrada',
           name: 'Sensor de Caudal (Entrada)',
-          token: 'BBUS-9IpzSBDhdNzYkmE0LCCpzBdtZwqO1i', // <-- Token específico
+          token: 'BBUS-9IpzSBDhdNzYkmE0LCCpzBdtZwqO1i',
           variables: {
             flow: { id: '675b5007b573670697e6a3e1', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
             temperature: { id: '675b4adea31be2000c752c02', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
@@ -55,7 +52,7 @@ UBIDOTS_PLANTS: [
         {
           id: 'volcan_caudal_salida',
           name: 'Sensor de Caudal (Salida)',
-          token: 'BBUS-4iTYJsb8LEmGiC06B5mJddfnYnSOgo', // <-- Token específico
+          token: 'BBUS-4iTYJsb8LEmGiC06B5mJddfnYnSOgo',
           variables: {
             flow_out: { id: '675b503da7f08d067f8fd760', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
             temperature_out: { id: '675b4aaba7f08d000c227674', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
@@ -71,7 +68,7 @@ UBIDOTS_PLANTS: [
         {
           id: 'candelaria_presion',
           name: 'Sensor de Presión',
-          token: 'BBUS-FdMQBCoiCTmPTIfW99BiUdqyZ1btDS', // <-- Token específico
+          token: 'BBUS-FdMQBCoiCTmPTIfW99BiUdqyZ1btDS',
           variables: {
             pressure: { id: '675b4ca2265048000b418020', name: 'Presión', unit: 'bar', icon: Gauge, color: 'sky' },
           }
@@ -79,7 +76,7 @@ UBIDOTS_PLANTS: [
         {
           id: 'candelaria_caudal_entrada',
           name: 'Sensor de Caudal (Entrada)',
-          token: 'BBUS-oQ3cbne7nw6RfaB6XQlHHuH4LXaiUM', // <-- Token específico
+          token: 'BBUS-oQ3cbne7nw6RfaB6XQlHHuH4LXaiUM',
           variables: {
             flow: { id: '675b4f74a31be2000c752c05', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
             temperature: { id: '675b4b0eacf9cf000bb0964a', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
@@ -89,7 +86,7 @@ UBIDOTS_PLANTS: [
         {
           id: 'candelaria_caudal_salida',
           name: 'Sensor de Caudal (Salida)',
-          token: 'BBUS-advPUlUeQCkr9ksCE3XXUtAQqX0Gdy', // <-- Token específico
+          token: 'BBUS-advPUlUeQCkr9ksCE3XXUtAQqX0Gdy',
           variables: {
             flow_out: { id: '675b4fc66129a9000ec0dd2c', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
             temperature_out: { id: '675b4b62265048000eb5d0bc', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
@@ -101,18 +98,14 @@ UBIDOTS_PLANTS: [
   ]
 };
 
-// ===================================================================================
-// PASO 4: ACTUALIZAR NAVEGACIÓN
-// ===================================================================================
+
 const NAV_ITEMS = [
   { id: 'dashboard', label: 'Vista General (Firebase)', icon: LayoutDashboard },
   { id: 'charts', label: 'Gráficos (Firebase)', icon: BarChart3 },
-  { id: 'ubidots', label: 'Puntos de Medición', icon: Factory } // <-- Nuevo item de menú
+  { id: 'ubidots', label: 'Puntos de Medición', icon: Factory }
 ];
 
-// Custom hooks (Firebase)
 const useFirebaseData = () => {
-  // ... (código sin cambios)
   const [lastData, setLastData] = useState(null);
   const [history, setHistory] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -208,8 +201,8 @@ const useUbidotsData = (plantId) => {
           Object.keys(sensor.variables).forEach(key => {
             const varId = sensor.variables[key].id;
             latestValuesPromises.push(
-              fetch(`https://industrial.api.ubidots.com/api/v1.6/variables/${varId}/values/?page_size=1`, { 
-                headers: { 'X-Auth-Token': sensor.token } 
+              fetch(`https://industrial.api.ubidots.com/api/v1.6/variables/${varId}/values/?page_size=1`, {
+                headers: { 'X-Auth-Token': sensor.token }
               }).then(res => res.json())
             );
           });
@@ -227,7 +220,7 @@ const useUbidotsData = (plantId) => {
         // --- 2. OBTENER HISTORIAL ---
         let historyPromises = [];
         // Guardaremos las claves en el mismo orden que los IDs para mapear la respuesta
-        const sensorVariableKeys = []; 
+        const sensorVariableKeys = [];
 
         plantConfig.sensors.forEach(sensor => {
           const variableIdsForSensor = [];
@@ -257,7 +250,7 @@ const useUbidotsData = (plantId) => {
             );
           }
         });
-        
+
         const historyResultsFromSensors = await Promise.all(historyPromises);
         console.log("Respuesta CRUDA de Ubidots para el historial:", historyResultsFromSensors);
 
@@ -284,7 +277,7 @@ const useUbidotsData = (plantId) => {
             });
           }
         });
-        
+
         const history = Object.values(unifiedHistory).sort((a, b) => a.timestamp - b.timestamp);
         console.log("Arreglo de 'history' FINAL para los gráficos:", history);
 
@@ -306,7 +299,6 @@ const useUbidotsData = (plantId) => {
 
 
 const useMobileMenu = () => {
-  // ... (código sin cambios)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const openMenu = useCallback(() => setIsMobileMenuOpen(true), []);
@@ -333,9 +325,7 @@ const useMobileMenu = () => {
   return { isMobileMenuOpen, openMenu, closeMenu };
 };
 
-// Utility functions
 const formatTimestamp = (timestamp) => {
-  // ... (código sin cambios)
   return new Date(Number(timestamp) * 1000).toLocaleString('es-ES', {
     dateStyle: 'long',
     timeStyle: 'medium'
@@ -343,20 +333,16 @@ const formatTimestamp = (timestamp) => {
 };
 
 const calculateActivity = (elapsedTimeUs) => {
-  // ... (código sin cambios)
   if (!elapsedTimeUs) return '0.00';
   return (elapsedTimeUs / 60000000).toFixed(2);
 };
 
 const formatValue = (value, decimals = 2) => {
-  // ... (código sin cambios)
   if (typeof value !== 'number' || isNaN(value)) return 'N/A';
   return value.toFixed(decimals);
 };
 
-// Components
 const Sidebar = React.memo(({ activeView, setActiveView, lastData, isMobileOpen, onClose }) => {
-  // ... (código sin cambios)
   const handleNavClick = useCallback((viewId) => {
     setActiveView(viewId);
     onClose();
@@ -398,8 +384,8 @@ const Sidebar = React.memo(({ activeView, setActiveView, lastData, isMobileOpen,
               key={item.id}
               onClick={() => handleNavClick(item.id)}
               className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-400 ${activeView === item.id
-                  ? 'bg-sky-500 text-white shadow-lg'
-                  : 'text-slate-300 hover:bg-slate-700 hover:text-white'
+                ? 'bg-sky-500 text-white shadow-lg'
+                : 'text-slate-300 hover:bg-slate-700 hover:text-white'
                 }`}
               aria-current={activeView === item.id ? 'page' : undefined}
             >
@@ -410,7 +396,7 @@ const Sidebar = React.memo(({ activeView, setActiveView, lastData, isMobileOpen,
         </nav>
 
         <div className="p-4 text-center text-xs text-slate-500 border-t border-slate-700">
-          <p>&copy; {new Date().getFullYear()} SensorHub</p>
+          <p>&copy; {new Date().getFullYear()} {deviceName}</p>
         </div>
       </aside>
     </>
@@ -418,7 +404,6 @@ const Sidebar = React.memo(({ activeView, setActiveView, lastData, isMobileOpen,
 });
 
 const MobileHeader = React.memo(({ onMenuClick }) => {
-  // ... (código sin cambios)
   return (
     <header className="md:hidden bg-slate-800 text-white p-4 flex items-center shadow-lg">
       <button
@@ -437,7 +422,6 @@ const MobileHeader = React.memo(({ onMenuClick }) => {
 });
 
 const DashboardCard = React.memo(({ icon: Icon, title, value, unit, color, bgColor }) => {
-  // ... (código sin cambios)
   return (
     <div className="bg-white shadow-sm rounded-xl p-6 flex items-center space-x-6 transition-all duration-300 hover:scale-105 hover:shadow-md">
       <div className={`p-4 rounded-full ${bgColor}`}>
@@ -454,7 +438,6 @@ const DashboardCard = React.memo(({ icon: Icon, title, value, unit, color, bgCol
 });
 
 const MapCard = React.memo(({ position, deviceData }) => {
-  // ... (código sin cambios)
   const isValidPosition = useMemo(() =>
     position && Array.isArray(position) && position.length === 2 &&
     position.every(coord => typeof coord === 'number' && !isNaN(coord))
@@ -508,7 +491,6 @@ const MapCard = React.memo(({ position, deviceData }) => {
 });
 
 const ErrorBoundary = ({ error }) => {
-  // ... (código sin cambios)
   return (
     <div className="p-4 md:p-8 flex justify-center items-center h-full">
       <div className="text-center bg-white p-10 rounded-xl shadow-lg max-w-md">
@@ -521,7 +503,6 @@ const ErrorBoundary = ({ error }) => {
 };
 
 const LoadingState = () => {
-  // ... (código sin cambios)
   return (
     <div className="flex justify-center items-center h-full">
       <div className="text-center">
@@ -533,7 +514,6 @@ const LoadingState = () => {
 };
 
 const DashboardView = React.memo(({ lastData }) => {
-  // ... (código sin cambios)
   const dashboardData = useMemo(() => {
     if (!lastData) return null;
 
@@ -624,15 +604,15 @@ const ChartCard = React.memo(({ data, dataKey, name, unit, threshold, color }) =
   <div className="bg-white shadow-lg rounded-xl p-4 md:p-6">
     <h3 className="font-semibold text-slate-700 mb-4">{`${name} (${unit})`}</h3>
     <ResponsiveContainer width="100%" height={300}>
-      <LineChart 
-        data={data} 
-        syncId="sensorCharts" 
+      <LineChart
+        data={data}
+        syncId="sensorCharts"
         margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
       >
         <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-        <XAxis 
-          dataKey="time" 
-          stroke="#94a3b8" 
+        <XAxis
+          dataKey="time"
+          stroke="#94a3b8"
           fontSize={12}
           tick={{ fontSize: 12 }}
         />
@@ -655,23 +635,23 @@ const ChartCard = React.memo(({ data, dataKey, name, unit, threshold, color }) =
         />
         <Legend />
         {threshold && (
-          <ReferenceLine 
-            y={threshold} 
+          <ReferenceLine
+            y={threshold}
             label={{ value: "Límite", position: "topRight" }}
-            stroke="#ef4444" 
+            stroke="#ef4444"
             strokeDasharray="5 5"
           />
         )}
-        <Line 
-          type="monotone" 
-          dataKey={dataKey} 
-          name={name} 
-          stroke={color} 
-          strokeWidth={2} 
-          dot={false} 
+        <Line
+          type="monotone"
+          dataKey={dataKey}
+          name={name}
+          stroke={color}
+          strokeWidth={2}
+          dot={false}
           activeDot={{ r: 6, strokeWidth: 2, fill: color }}
           // ✨ ¡AÑADE ESTA LÍNEA Y LISTO! ✨
-          connectNulls={true} 
+          connectNulls={true}
         />
       </LineChart>
     </ResponsiveContainer>
@@ -718,15 +698,12 @@ const ChartsView = React.memo(({ history }) => {
   );
 });
 
-// ===================================================================================
-// PASO 3: CREAR EL NUEVO COMPONENTE DE VISTA PARA UBIDOTS
-// ===================================================================================
 const UbidotsView = () => {
   const [selectedPlant, setSelectedPlant] = useState(CONSTANTS.UBIDOTS_PLANTS[0]?.id);
   const { data, loading, error } = useUbidotsData(selectedPlant);
 
   const plantConfig = CONSTANTS.UBIDOTS_PLANTS.find(p => p.id === selectedPlant);
-  
+
   const renderContent = () => {
     if (loading) return <LoadingState />;
     if (error) return <ErrorBoundary error={error} />;
@@ -753,11 +730,11 @@ const UbidotsView = () => {
             </div>
           </div>
         ))}
-        
+
         {/* Gráficos con el historial de todas las variables */}
         <h3 className="text-2xl font-semibold text-slate-700 mb-4 mt-8 border-b-2 border-slate-300 pb-2">Gráficas Históricas (Últimas 24h)</h3>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {plantConfig.sensors.flatMap(sensor => 
+          {plantConfig.sensors.flatMap(sensor =>
             Object.entries(sensor.variables).map(([key, config]) => (
               <ChartCard
                 key={key}
@@ -790,16 +767,12 @@ const UbidotsView = () => {
           ))}
         </select>
       </div>
-      
+
       {renderContent()}
     </div>
   );
 };
 
-
-// ===================================================================================
-// Main App Component
-// ===================================================================================
 export default function App() {
   const [activeView, setActiveView] = useState('dashboard');
   const { lastData, history, loading, error } = useFirebaseData();
@@ -849,7 +822,6 @@ export default function App() {
             <>
               {activeView === 'dashboard' && <DashboardView lastData={lastData} />}
               {activeView === 'charts' && <ChartsView history={history} />}
-              {/* PASO 4: Renderizar la nueva vista de Ubidots */}
               {activeView === 'ubidots' && <UbidotsView />}
             </>
           )}
