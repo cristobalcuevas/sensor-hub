@@ -1,10 +1,8 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import { LineChart, ReferenceLine, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import {
-  Droplet, Gauge, Waves, Wifi, Battery, Activity, LayoutDashboard,
-  BarChart3, Clock, AlertTriangle, Menu, X, MapPin, Factory, Thermometer, ThermometerSun
-} from 'lucide-react';
+import { Droplet, Gauge, Waves, Wifi, Battery, Activity, CircuitBoard, Clock, AlertTriangle, Menu, X, MapPin,
+  Factory, Thermometer, ThermometerSun, CloudSun, Wind, CloudRain, Compass } from 'lucide-react';
 
 import { ref, onValue } from "firebase/database";
 import { db } from "./firebase.js";
@@ -26,6 +24,12 @@ const CONSTANTS = {
     amber: '#f59e0b',
   },
 
+    AMBIENT_WEATHER: {
+    API_KEY: import.meta.env.VITE_AW_API_KEY,
+    APPLICATION_KEY: import.meta.env.VITE_AW_APPLICATION_KEY,
+    MAC_ADDRESS: import.meta.env.VITE_AW_MAC_ADDRESS,
+  },
+
   UBIDOTS_PLANTS: [
     {
       id: 'planta_el_volcan',
@@ -33,30 +37,30 @@ const CONSTANTS = {
       sensors: [
         {
           id: 'volcan_presion',
-          name: 'Sensor de Presión',
-          token: 'BBUS-9PmZqcYr5b515iqXRPk8Csn6rgH1er',
+          name: 'iag002',
+          token: import.meta.env.VITE_UBIDOTS_VOLCAN_TOKEN_PRESION,
           variables: {
-            pressure: { id: '675b4cd7acf9cf000ec3aad9', name: 'Presión', unit: 'bar', icon: Gauge, color: 'sky' },
+            pressure: { id: import.meta.env.VITE_UBIDOTS_VOLCAN_PRESION, name: 'Presión', unit: 'bar', icon: Gauge, color: 'sky' },
           }
         },
         {
           id: 'volcan_caudal_entrada',
-          name: 'Sensor de Caudal (Entrada)',
-          token: 'BBUS-9IpzSBDhdNzYkmE0LCCpzBdtZwqO1i',
+          name: 'pulsos-03',
+          token: import.meta.env.VITE_UBIDOTS_VOLCAN_TOKEN_ENTRADA,
           variables: {
-            flow: { id: '675b5007b573670697e6a3e1', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
-            temperature: { id: '675b4adea31be2000c752c02', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
-            humidity: { id: '675b4adea7f08d000c227675', name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
+            flow: { id: import.meta.env.VITE_UBIDOTS_VOLCAN_CAUDAL_ENTRADA, name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
+            temperature: { id: import.meta.env.VITE_UBIDOTS_VOLCAN_TEMPERATURA_ENTRADA, name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
+            humidity: { id: import.meta.env.VITE_UBIDOTS_VOLCAN_HUMEDAD_ENTRADA, name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
           }
         },
         {
           id: 'volcan_caudal_salida',
-          name: 'Sensor de Caudal (Salida)',
-          token: 'BBUS-4iTYJsb8LEmGiC06B5mJddfnYnSOgo',
+          name: 'pulsos-04',
+          token: import.meta.env.VITE_UBIDOTS_VOLCAN_TOKEN_SALIDA,
           variables: {
-            flow_out: { id: '675b503da7f08d067f8fd760', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
-            temperature_out: { id: '675b4aaba7f08d000c227674', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
-            humidity_out: { id: '675b4aaaa31be2000de6608e', name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
+            flow_out: { id: import.meta.env.VITE_UBIDOTS_VOLCAN_CAUDAL_SALIDA, name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
+            temperature_out: { id: import.meta.env.VITE_UBIDOTS_VOLCAN_TEMPERATURA_SALIDA, name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
+            humidity_out: { id: import.meta.env.VITE_UBIDOTS_VOLCAN_HUMEDAD_SALIDA, name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
           }
         }
       ]
@@ -67,30 +71,30 @@ const CONSTANTS = {
       sensors: [
         {
           id: 'candelaria_presion',
-          name: 'Sensor de Presión',
-          token: 'BBUS-FdMQBCoiCTmPTIfW99BiUdqyZ1btDS',
+          name: 'iag001',
+          token: import.meta.env.VITE_UBIDOTS_CANDELARIA_TOKEN_PRESION,
           variables: {
-            pressure: { id: '675b4ca2265048000b418020', name: 'Presión', unit: 'bar', icon: Gauge, color: 'sky' },
+            pressure: { id: import.meta.env.VITE_UBIDOTS_CANDELARIA_PRESION, name: 'Presión', unit: 'bar', icon: Gauge, color: 'sky' },
           }
         },
         {
           id: 'candelaria_caudal_entrada',
-          name: 'Sensor de Caudal (Entrada)',
-          token: 'BBUS-oQ3cbne7nw6RfaB6XQlHHuH4LXaiUM',
+          name: 'pulsos-01',
+          token: import.meta.env.VITE_UBIDOTS_CANDELARIA_TOKEN_ENTRADA,
           variables: {
-            flow: { id: '675b4f74a31be2000c752c05', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
-            temperature: { id: '675b4b0eacf9cf000bb0964a', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
-            humidity: { id: '675b4b0ea7f08d000c227676', name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
+            flow: { id: import.meta.env.VITE_UBIDOTS_CANDELARIA_CAUDAL_ENTRADA, name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
+            temperature: { id: import.meta.env.VITE_UBIDOTS_CANDELARIA_TEMPERATURA_ENTRADA, name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
+            humidity: { id: import.meta.env.VITE_UBIDOTS_CANDELARIA_HUMEDAD_ENTRADA, name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
           }
         },
         {
           id: 'candelaria_caudal_salida',
-          name: 'Sensor de Caudal (Salida)',
-          token: 'BBUS-advPUlUeQCkr9ksCE3XXUtAQqX0Gdy',
+          name: 'pulsos-02',
+          token: import.meta.env.VITE_UBIDOTS_CANDELARIA_TOKEN_SALIDA,
           variables: {
-            flow_out: { id: '675b4fc66129a9000ec0dd2c', name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
-            temperature_out: { id: '675b4b62265048000eb5d0bc', name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
-            humidity_out: { id: '675b4b629b591e000d1c358e', name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
+            flow_out: { id: import.meta.env.VITE_UBIDOTS_CANDELARIA_CAUDAL_SALIDA, name: 'Caudal', unit: 'L/min', icon: Waves, color: 'green' },
+            temperature_out: { id: import.meta.env.VITE_UBIDOTS_CANDELARIA_TEMPERATURA_SALIDA, name: 'Temperatura', unit: '°C', icon: Thermometer, color: 'amber' },
+            humidity_out: { id: import.meta.env.VITE_UBIDOTS_CANDELARIA_HUMEDAD_SALIDA, name: 'Humedad', unit: '%', icon: ThermometerSun, color: 'orange' },
           }
         }
       ]
@@ -100,9 +104,9 @@ const CONSTANTS = {
 
 
 const NAV_ITEMS = [
-  { id: 'dashboard', label: 'Vista General (Firebase)', icon: LayoutDashboard },
-  { id: 'charts', label: 'Gráficos (Firebase)', icon: BarChart3 },
-  { id: 'ubidots', label: 'Puntos de Medición', icon: Factory }
+  { id: 'firebase', label: 'Maqueta', icon: CircuitBoard },
+  { id: 'ubidots', label: 'Puntos de Medición', icon: Factory },
+  { id: 'weather', label: 'Estación Met.', icon: CloudSun }
 ];
 
 const useFirebaseData = () => {
@@ -168,9 +172,6 @@ const useFirebaseData = () => {
   return { lastData, history, loading, error };
 };
 
-// ===================================================================================
-// PASO 2: CREAR HOOK PARA OBTENER DATOS DE UBIDOTS
-// ===================================================================================
 const useUbidotsData = (plantId) => {
   const [data, setData] = useState({ latestValues: {}, history: [] });
   const [loading, setLoading] = useState(true);
@@ -297,6 +298,90 @@ const useUbidotsData = (plantId) => {
   return { data, loading, error };
 };
 
+const useAmbientWeatherData = () => {
+  const [data, setData] = useState({ latest: null, history: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  
+  // ✨ 1. Usamos una 'ref' para controlar si ya se está haciendo una petición.
+  // Esto evita las llamadas duplicadas del modo estricto de React.
+  const isFetching = React.useRef(false);
+
+  React.useEffect(() => {
+    const fetchData = async () => {
+      // Si ya hay una petición en curso, no hacemos nada.
+      if (isFetching.current) return;
+
+      // Marcamos que la petición va a comenzar.
+      isFetching.current = true;
+      
+      // Mantenemos el 'loading' solo en la primera carga.
+      // En las siguientes, los datos se refrescarán en segundo plano.
+      if (!data.latest) {
+          setLoading(true);
+      }
+      setError(null);
+
+      const { API_KEY, APPLICATION_KEY, MAC_ADDRESS } = CONSTANTS.AMBIENT_WEATHER;
+
+      if (!APPLICATION_KEY || !MAC_ADDRESS || APPLICATION_KEY === 'TU_APPLICATION_KEY_AQUI') {
+        setError("Por favor, configura tu Application Key y MAC Address en las constantes.");
+        setLoading(false);
+        isFetching.current = false;
+        return;
+      }
+
+      try {
+        const url = `https://api.ambientweather.net/v1/devices/${MAC_ADDRESS}?apiKey=${API_KEY}&applicationKey=${APPLICATION_KEY}&limit=288`;
+        const response = await fetch(url);
+
+        if (!response.ok) {
+           const errorBody = await response.json();
+           throw new Error(`Error de la API: ${response.status} - ${errorBody.message || response.statusText}`);
+        }
+
+        const historyData = await response.json();
+
+        if (historyData.length > 0) {
+          const latest = historyData[0];
+          const history = historyData.map(d => ({
+            ...d,
+            tempc: (d.tempf - 32) * 5 / 9,
+            baromrelhpa: d.baromrelin * 33.8639,
+            windspeedkmh: d.windspeedmph * 1.60934,
+            dailyrainmm: d.dailyrainin * 25.4,
+            timestamp: new Date(d.dateutc).getTime(),
+            time: new Date(d.dateutc).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' }),
+          })).sort((a, b) => a.timestamp - b.timestamp);
+          setData({ latest: history[history.length - 1], history });
+        } else {
+          setError("No se recibió historial de la estación. Verifica la MAC Address y las Keys.");
+        }
+      } catch (err) {
+        setError('Error al obtener datos de Ambient Weather: ' + err.message);
+        console.error("Ambient Weather API error:", err);
+      } finally {
+        // Marcamos que la petición ha terminado.
+        isFetching.current = false;
+        setLoading(false);
+      }
+    };
+
+    fetchData();
+
+    // ✨ 2. Usamos 'setTimeout' en lugar de 'setInterval' para más control.
+    // Esto agenda la próxima llamada 5 minutos DESPUÉS de que la actual termine.
+    const timerId = setTimeout(() => {
+        const intervalId = setInterval(fetchData, 300000); // 300000 ms = 5 minutos
+        return () => clearInterval(intervalId);
+    }, 300000);
+
+    return () => clearTimeout(timerId);
+
+  }, []); // El array vacío asegura que esto se configure solo una vez.
+
+  return { data, loading, error };
+};
 
 const useMobileMenu = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -437,6 +522,64 @@ const DashboardCard = React.memo(({ icon: Icon, title, value, unit, color, bgCol
   )
 });
 
+const ChartCard = React.memo(({ data, dataKey, name, unit, threshold, color }) => (
+  <div className="bg-white shadow-lg rounded-xl p-4 md:p-6">
+    <h3 className="font-semibold text-slate-700 mb-4">{`${name} (${unit})`}</h3>
+    <ResponsiveContainer width="100%" height={300}>
+      <LineChart
+        data={data}
+        margin={{ top: 5, right: 30, left: 25, bottom: 20 }}
+      >
+        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+        <XAxis
+          label={{value: 'Time', offset: 30, fill: '#64748b', fontSize: 12}}
+          dataKey="time"
+          stroke="#94a3b8"
+          fontSize={12}
+          tick={{ fontSize: 12 }}
+        />
+        <YAxis
+          label={{value: `${name} (${unit})`, angle: -90, position: 'center', offset: -5, fill: '#64748b', fontSize: 12}}
+          stroke="#94a3b8"
+          fontSize={12}
+          tickFormatter={(value) => formatValue(value)}
+          tick={{ fontSize: 12 }}
+        />
+        <Tooltip
+          contentStyle={{
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(5px)',
+            border: '1px solid #e0e0e0',
+            borderRadius: '0.75rem',
+            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
+          }}
+          formatter={(value, name, props) => [formatValue(value), props.payload.name]}
+          labelStyle={{ color: '#475569' }}
+        />
+        <Legend />
+        {threshold && (
+          <ReferenceLine
+            y={threshold}
+            label={{ value: "Límite", position: "topRight" }}
+            stroke="#ef4444"
+            strokeDasharray="5 5"
+          />
+        )}
+        <Line
+          type="monotone"
+          dataKey={dataKey}
+          name={name}
+          stroke={color}
+          strokeWidth={2}
+          dot={false}
+          activeDot={{ r: 6, strokeWidth: 2, fill: color }}
+          connectNulls={true}
+        />
+      </LineChart>
+    </ResponsiveContainer>
+  </div>
+));
+
 const MapCard = React.memo(({ position, deviceData }) => {
   const isValidPosition = useMemo(() =>
     position && Array.isArray(position) && position.length === 2 &&
@@ -513,180 +656,53 @@ const LoadingState = () => {
   )
 };
 
-const DashboardView = React.memo(({ lastData }) => {
-  const dashboardData = useMemo(() => {
-    if (!lastData) return null;
+const FirebaseView = () => {
+  const { lastData, history, loading, error } = useFirebaseData();
 
-    return {
-      cards: [
-        {
-          icon: Gauge,
-          title: "Presión",
-          value: formatValue(lastData.pressure),
-          unit: "bar",
-          color: "text-sky-500",
-          bgColor: "bg-sky-100"
-        },
-        {
-          icon: Waves,
-          title: "Caudal",
-          value: formatValue(lastData.flow),
-          unit: "L/min",
-          color: "text-green-500",
-          bgColor: "bg-green-100"
-        },
-        {
-          icon: Wifi,
-          title: "Señal (RSSI)",
-          value: lastData.rssi,
-          unit: "dBm",
-          color: "text-rose-500",
-          bgColor: "bg-rose-100"
-        },
-        {
-          icon: Battery,
-          title: "Voltaje",
-          value: "5.00",
-          unit: "V",
-          color: "text-violet-500",
-          bgColor: "bg-violet-100"
-        },
-        {
-          icon: Activity,
-          title: "Activo",
-          value: calculateActivity(lastData.elapsed_time_us),
-          unit: "min",
-          color: "text-orange-500",
-          bgColor: "bg-orange-100"
-        }
-      ],
-      lastUpdate: formatTimestamp(lastData.timestamp)
-    };
-  }, [lastData]);
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorBoundary error={error} />;
 
-  if (!dashboardData) {
+  if (!lastData) {
     return (
       <div className="p-4 md:p-8 flex justify-center items-center h-full">
         <div className="text-center bg-white p-10 rounded-xl shadow-lg">
           <AlertTriangle className="mx-auto h-12 w-12 text-amber-500" />
-          <h2 className="mt-4 text-2xl font-semibold text-slate-700">No se encontraron datos</h2>
+          <h2 className="mt-4 text-2xl font-semibold text-slate-700">No se encontraron datos de Firebase</h2>
           <p className="text-slate-500 mt-2 max-w-md">
-            Asegúrate de que tu base de datos de Firebase tenga datos en la ruta que estás consultando ("ejemplo").
+            Asegúrate de que tu base de datos tenga datos en la ruta "ejemplo".
           </p>
         </div>
       </div>
     );
   }
 
+  const dashboardCards = [
+      { icon: Gauge, title: "Presión", value: formatValue(lastData.pressure), unit: "bar", color: "text-sky-500", bgColor: "bg-sky-100" },
+      { icon: Waves, title: "Caudal", value: formatValue(lastData.flow), unit: "L/min", color: "text-green-500", bgColor: "bg-green-100" },
+      { icon: Wifi, title: "Señal (RSSI)", value: lastData.rssi, unit: "dBm", color: "text-rose-500", bgColor: "bg-rose-100" },
+      { icon: Battery, title: "Voltaje", value: "5.00", unit: "V", color: "text-violet-500", bgColor: "bg-violet-100" },
+      { icon: Activity, title: "Activo", value: calculateActivity(lastData.elapsed_time_us), unit: "min", color: "text-orange-500", bgColor: "bg-orange-100" }
+  ];
+
+  const chartConfigs = [
+    { dataKey: "pressure", name: "Presión", unit: "bar", threshold: CONSTANTS.THRESHOLDS.pressure, color: CONSTANTS.COLORS.sky },
+    { dataKey: "flow", name: "Caudal", unit: "L/min", threshold: CONSTANTS.THRESHOLDS.flow, color: CONSTANTS.COLORS.green },
+    { dataKey: "rssi", name: "Señal (RSSI)", unit: "dBm", threshold: null, color: CONSTANTS.COLORS.rose }
+  ];
+
   return (
     <div className="p-4 md:p-8 animate-fade-in">
-      <h2 className="text-3xl font-bold text-slate-800 mb-6">Vista General (Firebase)</h2>
-
+      {/* SECCIÓN DEL DASHBOARD */}
+      <h2 className="text-3xl font-bold text-slate-800 mb-6">Maqueta</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-6">
-        {dashboardData.cards.map((card, index) => (
-          <DashboardCard key={index} {...card} />
-        ))}
+        {dashboardCards.map((card, index) => <DashboardCard key={index} {...card} />)}
       </div>
-
-      <div className="grid grid-cols-1 gap-6">
+      <div className="grid grid-cols-1 gap-6 mb-8">
         <MapCard position={CONSTANTS.SENSOR_LOCATION} deviceData={lastData} />
       </div>
 
-      <div className="text-md text-slate-600 flex items-center pt-5">
-        <Clock className="mr-2 h-4 w-4" />
-        Última Actualización: {dashboardData.lastUpdate}
-      </div>
-    </div>
-  );
-});
-
-const ChartCard = React.memo(({ data, dataKey, name, unit, threshold, color }) => (
-  <div className="bg-white shadow-lg rounded-xl p-4 md:p-6">
-    <h3 className="font-semibold text-slate-700 mb-4">{`${name} (${unit})`}</h3>
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart
-        data={data}
-        syncId="sensorCharts"
-        margin={{ top: 5, right: 20, left: -10, bottom: 5 }}
-      >
-        <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-        <XAxis
-          dataKey="time"
-          stroke="#94a3b8"
-          fontSize={12}
-          tick={{ fontSize: 12 }}
-        />
-        <YAxis
-          stroke="#94a3b8"
-          fontSize={12}
-          tickFormatter={(value) => formatValue(value)}
-          tick={{ fontSize: 12 }}
-        />
-        <Tooltip
-          contentStyle={{
-            backgroundColor: 'rgba(255, 255, 255, 0.95)',
-            backdropFilter: 'blur(5px)',
-            border: '1px solid #e0e0e0',
-            borderRadius: '0.75rem',
-            boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
-          }}
-          formatter={(value, name, props) => [formatValue(value), props.payload.name]}
-          labelStyle={{ color: '#475569' }}
-        />
-        <Legend />
-        {threshold && (
-          <ReferenceLine
-            y={threshold}
-            label={{ value: "Límite", position: "topRight" }}
-            stroke="#ef4444"
-            strokeDasharray="5 5"
-          />
-        )}
-        <Line
-          type="monotone"
-          dataKey={dataKey}
-          name={name}
-          stroke={color}
-          strokeWidth={2}
-          dot={false}
-          activeDot={{ r: 6, strokeWidth: 2, fill: color }}
-          // ✨ ¡AÑADE ESTA LÍNEA Y LISTO! ✨
-          connectNulls={true}
-        />
-      </LineChart>
-    </ResponsiveContainer>
-  </div>
-));
-
-const ChartsView = React.memo(({ history }) => {
-  // ... (código sin cambios)
-  const chartConfigs = useMemo(() => [
-    {
-      dataKey: "pressure",
-      name: "Presión",
-      unit: "bar",
-      threshold: CONSTANTS.THRESHOLDS.pressure,
-      color: CONSTANTS.COLORS.sky
-    },
-    {
-      dataKey: "flow",
-      name: "Caudal",
-      unit: "L/min",
-      threshold: CONSTANTS.THRESHOLDS.flow,
-      color: CONSTANTS.COLORS.green
-    },
-    {
-      dataKey: "rssi",
-      name: "Señal (RSSI)",
-      unit: "dBm",
-      threshold: null,
-      color: CONSTANTS.COLORS.rose
-    }
-  ], []);
-
-  return (
-    <div className="p-4 md:p-8 animate-fade-in">
-      <h2 className="text-3xl font-bold text-slate-800 mb-6">Gráficas Históricas (Firebase)</h2>
+      {/* SECCIÓN DE GRÁFICOS */}
+      <h3 className="text-2xl font-semibold text-slate-700 mb-4 mt-8 border-b-2 border-slate-300 pb-2">Gráficas Históricas</h3>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {chartConfigs.map((config, index) => (
           <div key={config.dataKey} className={index === 2 ? "lg:col-span-2" : ""}>
@@ -694,9 +710,14 @@ const ChartsView = React.memo(({ history }) => {
           </div>
         ))}
       </div>
+      
+      <div className="text-md text-slate-600 flex items-center pt-5">
+        <Clock className="mr-2 h-4 w-4" />
+        Última Actualización: {formatTimestamp(lastData.timestamp)}
+      </div>
     </div>
   );
-});
+};
 
 const UbidotsView = () => {
   const [selectedPlant, setSelectedPlant] = useState(CONSTANTS.UBIDOTS_PLANTS[0]?.id);
@@ -740,7 +761,7 @@ const UbidotsView = () => {
                 key={key}
                 data={data.history}
                 dataKey={key}
-                name={`${config.name} (${sensor.name})`} // Añadir nombre del sensor al gráfico
+                name={`${config.name} ${sensor.name}`}
                 unit={config.unit}
                 color={CONSTANTS.COLORS[config.color]}
                 threshold={null}
@@ -773,41 +794,83 @@ const UbidotsView = () => {
   );
 };
 
+const WeatherView = () => {
+  const { data, loading, error } = useAmbientWeatherData();
+
+  const renderContent = () => {
+    if (loading) return <LoadingState />;
+    if (error) return <ErrorBoundary error={error} />;
+    if (!data.latest) return <ErrorBoundary error="No se encontraron datos recientes de la estación." />;
+
+    const { latest, history } = data;
+
+    // Tarjetas para los datos más recientes
+    const weatherCards = [
+      { icon: Thermometer, title: "Temperatura Exterior", value: formatValue(latest.tempc, 1), unit: "°C", color: "text-orange-500", bgColor: "bg-orange-100" },
+      { icon: ThermometerSun, title: "Humedad Exterior", value: formatValue(latest.humidity, 0), unit: "%", color: "text-sky-500", bgColor: "bg-sky-100" },
+      { icon: Gauge, title: "Presión relativa", value: formatValue(latest.baromrelhpa, 0), unit: "hPa", color: "text-violet-500", bgColor: "bg-violet-100" },
+      { icon: CloudRain, title: "Precipitación diarias", value: formatValue(latest.dailyrainmm, 1), unit: "mm", color: "text-blue-500", bgColor: "bg-blue-100" },
+      { icon: Wind, title: "Velocidad del viento", value: formatValue(latest.windspeedkmh, 1), unit: "km/h", color: "text-green-500", bgColor: "bg-green-100" },
+      { icon: Compass, title: "Dirección del viento", value: latest.winddir, unit: "°", color: "text-cyan-500", bgColor: "bg-cyan-100" },
+    ];
+
+    // Configuración para los gráficos
+    const chartConfigs = [
+       { dataKey: "tempc", name: "Temperatura", unit: "°C", color: CONSTANTS.COLORS.orange },
+       { dataKey: "humidity", name: "Humedad", unit: "%", color: CONSTANTS.COLORS.sky },
+        { dataKey: "baromrelhpa", name: "Presión relativa", unit: "hPa", color: CONSTANTS.COLORS.violet },
+        { dataKey: "windspeedkmh", name: "Velocidad del Viento", unit: "km/h", color: CONSTANTS.COLORS.green },
+        { dataKey: "dailyrainmm", name: "Precipitación diarias", unit: "mm", color: CONSTANTS.COLORS.blue },
+    ];
+
+
+    return (
+      <>
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mb-8">
+          {weatherCards.map(card => <DashboardCard key={card.title} {...card} />)}
+        </div>
+        
+        <h3 className="text-2xl font-semibold text-slate-700 mb-4 mt-8 border-b-2 border-slate-300 pb-2">Gráficas Históricas (Últimas 24h)</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {chartConfigs.map(config => (
+            <ChartCard
+              key={config.dataKey}
+              data={history}
+              dataKey={config.dataKey}
+              name={config.name}
+              unit={config.unit}
+              color={config.color}
+            />
+          ))}
+        </div>
+         <div className="text-md text-slate-600 flex items-center pt-5">
+            <Clock className="mr-2 h-4 w-4" />
+            Última Actualización: {new Date(latest.date).toLocaleString('es-ES')}
+        </div>
+      </>
+    );
+  };
+  
+  return (
+    <div className="p-4 md:p-8 animate-fade-in">
+      <h2 className="text-3xl font-bold text-slate-800 mb-8">Estación Meteorológica </h2>
+      {renderContent()}
+    </div>
+  );
+};
+
 export default function App() {
-  const [activeView, setActiveView] = useState('dashboard');
-  const { lastData, history, loading, error } = useFirebaseData();
+  const [activeView, setActiveView] = useState('firebase');
   const { isMobileMenuOpen, openMenu, closeMenu } = useMobileMenu();
 
   React.useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @keyframes fade-in {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      .animate-fade-in {
-        animation: fade-in 0.3s ease-out;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
   }, []);
-
-  // Nota: El error de Firebase se manejará de forma aislada
-  if (error && (activeView === 'dashboard' || activeView === 'charts')) {
-    return (
-      <div className="flex h-screen bg-slate-100 font-sans">
-        <ErrorBoundary error={error} />
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-screen bg-slate-100 font-sans">
       <Sidebar
         activeView={activeView}
         setActiveView={setActiveView}
-        lastData={lastData}
         isMobileOpen={isMobileMenuOpen}
         onClose={closeMenu}
       />
@@ -815,16 +878,9 @@ export default function App() {
         <MobileHeader onMenuClick={openMenu} />
 
         <main className="flex-1 overflow-y-auto">
-          {/* Muestra el loading solo para las vistas de Firebase */}
-          {loading && (activeView === 'dashboard' || activeView === 'charts') ? (
-            <LoadingState />
-          ) : (
-            <>
-              {activeView === 'dashboard' && <DashboardView lastData={lastData} />}
-              {activeView === 'charts' && <ChartsView history={history} />}
-              {activeView === 'ubidots' && <UbidotsView />}
-            </>
-          )}
+          {activeView === 'firebase' && <FirebaseView />}
+          {activeView === 'ubidots' && <UbidotsView />}
+          {activeView === 'weather' && <WeatherView />}
         </main>
       </div>
     </div>
